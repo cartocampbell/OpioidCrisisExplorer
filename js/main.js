@@ -16,12 +16,12 @@ function setMap(){
 		.attr("height", height);
 
 	//create Albers equal area conic proj. centered on france
-	var projection = d3.geoAlbers()
-		.center([-3.64, 16.33])
-		.rotate([-2, 101, -24.55])
-		.parallels([14.05, 41.23])
-		.scale(376.77)
-		.translate([width / 2, height / 2]);
+    var projection = d3.geoAlbers()
+        .center([0, 46.2])
+        .rotate([-2, 0, 0])
+        .parallels([43, 62])
+        .scale(2500)
+        .translate([width / 2, height / 2]);
 
 	//create path generator
 	var path = d3.geoPath()
@@ -29,15 +29,19 @@ function setMap(){
 
 	//use d3-queue to parallelize asynchronous data loading
 	d3.queue()
-		.defer(d3.csv, "data/OD_DATA.csv")//load attribute data from csv
-		.defer(d3.json, "data/US_STATES.topojson")//load spatial data
-		.defer(d3.json, "data/COUNTRIES.topojson")
-		.await(callback);
+        .defer(d3.csv, "data/odData.csv") //load attributes from csv
+        .defer(d3.json, "data/naCountries.topojson") //load background spatial data
+        .defer(d3.json, "data/newStates.topojson") //load choropleth spatial data
+        .await(callback);
 
-	function callback(error, csvData, states, countries){
-		//translate US_STATES topojson
-		var unitedStates = topojson.feature(states, states.objects.US_STATES).features;
-		var naCountries = topojson.feature(countries, countries.objects.COUNTRIES).features;
+	function callback(error, csvData, countryData, statesData){
+		//translate usStates topojson
+		var naCountries = topojson.feature(countryData, countryData.objects.ne_50m_admin_0_countries), //load background spatial data 
+            unitedStates = topojson.feature(statesData, statesData.objects.states).features;//load choropleth data
+		    
+        
+        console.log(unitedStates);
+        console.log(naCountries);
 	
 		//add NA countries to map 
 		var northAmerica = map.append("path")
@@ -46,7 +50,7 @@ function setMap(){
 			.attr("d", path);
 		
 		//add us states to the map
-		var regions = map.selectAll(".unitedStates")
+		var states = map.selectAll(".unitedStates")
 			.data(unitedStates)
 			.enter()
 			.append("path")
