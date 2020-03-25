@@ -3,3 +3,11 @@
     stroke: #CCC;
     stroke-width: 2px;
 }
+
+.gratBackground {
+    fill: #D5E3FF;
+}
+
+.map {
+    border: medium solid #999;
+}
