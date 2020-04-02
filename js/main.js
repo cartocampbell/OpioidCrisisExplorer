@@ -1,11 +1,12 @@
 // wrap everything in self execting anon function to move the local scope
 (function() {
 
-	var attrArray = ["OODR_2015", "ADODR_2015", "OOP_2015",
-		"OODR_2016", "ADODR_2016", "OOP_2016", "OODR_2017", "ADODR_2017",
-		"OOP_2017", "OODR_2018", "ADODR_2018", "OOP_2018"];
+	var attrArray = ["Opioid_Overdose_Death_Rate_2015", "Accidental_Drug_Overdose_Death_Rate_2015", "Opioid_Overdose_Percentage_2015",
+					 "Opioid_Overdose_Death_Rate_2016", "Accidental_Drug_Overdose_Death_Rate_2016", "Opioid_Overdose_Percentage_2016",
+					 "Opioid_Overdose_Death_Rate_2017", "Accidental_Drug_Overdose_Death_Rate_2017", "Opioid_Overdose_Percentage_2017",
+					 "Opioid_Overdose_Death_Rate_2018", "Accidental_Drug_Overdose_Death_Rate_2018", "Opioid_Overdose_Percentage_2018"];
 
-	var expressed = attrArray[0]; //initial attribute
+	var expressed = attrArray[11]; //initial attribute
 
 //begin script when window loads
 	window.onload = setMap();
@@ -70,7 +71,7 @@
 			//add coordinated viz to map
 			setChart(csvData, colorScale);
 
-			createDropdown();
+			createDropdown(csvData);
 
 		};
 	};   // end of setMap()
@@ -195,12 +196,15 @@
 		};
 	};
 
-	// function to create a dropdown menu for attribute selectino
-	function createDropdown() {
+	// function to create a dropdown menu for attribute selection
+	function createDropdown(csvData) {
 		//add select element
 		var dropdown = d3.select("body")
 			.append("select")
-			.attr("class", "dropdown");
+			.attr("class", "dropdown")
+			.on("change", function(){
+				changeAttribute(this.value, csvData)
+			});
 
 		//add initial option
 		var titleOption = dropdown.append("option")
@@ -215,6 +219,46 @@
 			.append("option")
 			.attr("value", function(d) {return d})
 			.text(function (d) {return d});
+
+	};
+
+	//dropdown change listener handler
+	function changeAttribute(attribute, csvData){
+		//change the expressed attribute
+		expressed = attribute;
+
+		console.log(expressed);
+		console.log(csvData);
+
+		//recreate the color scale
+		var colorScale = makeColorScale(csvData);
+
+		//recolor enumeration units
+		var states = d3.selectAll(".unitedStates")
+			.style("fill", function(d){
+				return choropleth(d.properties, colorScale)
+			});
+
+		//re-sort, resize, and recolor bars
+		var bars = d3.selectAll(".bar")
+			//re-sort bars
+			.sort(function(a, b){
+				return b[expressed] - a[expressed];
+			})
+			.attr("x", function(d, i){
+				return i * (chartInnerWidth / csvData.length) + leftPadding;
+			})
+			//resize bars
+			.attr("height", function(d, i){
+				return 463 - yScale(parseFloat(d[expressed]));
+			})
+			.attr("y", function(d, i){
+				return yScale(parseFloat(d[expressed])) + topBottomPadding;
+			})
+			//recolor bars
+			.style("fill", function(d){
+				return choropleth(d, colorScale);
+			});
 
 	};
 
@@ -276,10 +320,10 @@
 
 		//create a text element for the chart title
 		var chartTitle = chart.append("text")
-			.attr("x", 40)
-			.attr("y", 40)
+			.attr("x", 35)
+			.attr("y", 30)
 			.attr("class", "chartTitle")
-			.text("Number of Overdoses per State");
+			.text(expressed.replace(/_/g, " "));
 
 		//create vertical axis generator
 		var yAxis = d3.axisLeft()
