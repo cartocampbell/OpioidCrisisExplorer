@@ -8,6 +8,21 @@
 
 	var expressed = attrArray[11]; //initial attribute
 
+	//chart frame dimensions
+	var chartWidth = window.innerWidth * 0.425,
+		chartHeight = 473,
+		leftPadding = 25,
+		rightPadding = 2,
+		topBottomPadding = 5,
+		chartInnerWidth = chartWidth - leftPadding - rightPadding,
+		chartInnerHeight = chartHeight - topBottomPadding * 2,
+		translate = "translate(" + leftPadding + "," + topBottomPadding + ")";
+
+	//create a scale to size bars proportionally to frame and for axis
+	var yScale = d3.scaleLinear()
+		.range([463, 0])
+		.domain([0, 100]);
+
 //begin script when window loads
 	window.onload = setMap();
 
@@ -136,10 +151,10 @@
 
 	function joinData(unitedStates, csvData){
 		for (var i = 0; i < csvData.length; i++) {
-			var csvState = csvData[i]; // the current region
-			var csvKey = csvState.Location; //the csv primary key
+			var csvState = csvData[i]; // the current state
+			var csvKey = csvState.name; //the csv primary key
 
-			//loo through geojson states to find correct state
+			//loop through geojson states to find correct state
 			for (var a = 0; a < unitedStates.length; a++) {
 				var geojsonProps = unitedStates[a].properties; // the current state geojson properties
 
@@ -148,7 +163,7 @@
 				//where primary keys match, transfer csv data to geojson properties object
 				if (geojsonKey == csvKey) {
 
-					// assign all sttributes and values
+					// assign all attributes and values
 					attrArray.forEach((function (attr) {
 						var val = parseFloat(csvState[attr]);  // get csv attribute value
 
@@ -181,7 +196,16 @@
 			.attr("d", path)
 			.style("fill", function (d) {
 				return choropleth(d.properties, colorScale);
+		})
+			.on("mouseover", function (d) {
+				highlight(d.properties);
+			})
+			.on("mouseout", function (d) {
+				dehighlight(d.properties);
 		});
+
+		var desc = states.append("desc")
+			.text('{"stroke": "#000", "stroke-width": "0.5px"}');
 	};
 
 	//function to test for data value and return color
@@ -235,6 +259,8 @@
 
 		//recolor enumeration units
 		var states = d3.selectAll(".unitedStates")
+			.transition()
+			.duration(1000)
 			.style("fill", function(d){
 				return choropleth(d.properties, colorScale)
 			});
@@ -245,35 +271,41 @@
 			.sort(function(a, b){
 				return b[expressed] - a[expressed];
 			})
-			.attr("x", function(d, i){
-				return i * (chartInnerWidth / csvData.length) + leftPadding;
+			.transition() // add animation
+			.delay(function(d, i) {
+				return i * 20
 			})
-			//resize bars
-			.attr("height", function(d, i){
-				return 463 - yScale(parseFloat(d[expressed]));
-			})
-			.attr("y", function(d, i){
-				return yScale(parseFloat(d[expressed])) + topBottomPadding;
-			})
-			//recolor bars
-			.style("fill", function(d){
-				return choropleth(d, colorScale);
-			});
+			.duration(500);
 
+			// });
+
+		updateChart(bars, csvData.length, colorScale);
+
+	};
+
+	function updateChart(bars, n, colorScale) {
+		// position bars
+		bars.attr("x", function(d, i){
+			return i * (chartInnerWidth / n) + leftPadding;
+		})
+		//resize bars
+		.attr("height", function(d, i){
+			return 463 - yScale(parseFloat(d[expressed]));
+		})
+		.attr("y", function(d, i){
+			return yScale(parseFloat(d[expressed])) + topBottomPadding;
+		})
+		//recolor bars
+		.style("fill", function(d){
+			return choropleth(d, colorScale);
+		});
+
+		var chartTitle = d3.select(".chartTitle")
+			.text(expressed.replace(/_/g, " "));
 	};
 
 //function to create coordinated bar chart
 	function setChart(csvData, colorScale){
-		//chart frame dimensions
-		var chartWidth = window.innerWidth * 0.425,
-			chartHeight = 473,
-			leftPadding = 25,
-			rightPadding = 2,
-			topBottomPadding = 5,
-			chartInnerWidth = chartWidth - leftPadding - rightPadding,
-			chartInnerHeight = chartHeight - topBottomPadding * 2,
-			translate = "translate(" + leftPadding + "," + topBottomPadding + ")";
-
 		//create a second svg element to hold the bar chart
 		var chart = d3.select("body")
 			.append("svg")
@@ -288,10 +320,7 @@
 			.attr("height", chartInnerHeight)
 			.attr("transform", translate);
 
-		//create a scale to size bars proportionally to frame and for axis
-		var yScale = d3.scaleLinear()
-			.range([463, 0])
-			.domain([0, 100]);
+
 
 		//set bars for each province
 		var bars = chart.selectAll(".bar")
@@ -302,28 +331,19 @@
 				return b[expressed]-a[expressed]
 			})
 			.attr("class", function(d){
-				return "bar " + d.adm1_code;
+				return "bar " + d.name;
 			})
 			.attr("width", chartInnerWidth / csvData.length - 1)
-			.attr("x", function(d, i){
-				return i * (chartInnerWidth / csvData.length) + leftPadding;
-			})
-			.attr("height", function(d, i){
-				return 463 - yScale(parseFloat(d[expressed]));
-			})
-			.attr("y", function(d, i){
-				return yScale(parseFloat(d[expressed])) + topBottomPadding;
-			})
-			.style("fill", function(d){
-				return choropleth(d, colorScale);
-			});
+			.on("mouseover", highlight)
+			.on("mouseout", dehighlight);
+
 
 		//create a text element for the chart title
 		var chartTitle = chart.append("text")
 			.attr("x", 35)
 			.attr("y", 30)
-			.attr("class", "chartTitle")
-			.text(expressed.replace(/_/g, " "));
+			.attr("class", "chartTitle");
+
 
 		//create vertical axis generator
 		var yAxis = d3.axisLeft()
@@ -341,5 +361,40 @@
 			.attr("width", chartInnerWidth)
 			.attr("height", chartInnerHeight)
 			.attr("transform", translate);
+
+		var desc = bars.append("desc")
+			.text('{"stroke": "none", "stroke-width": "0px"}');
+
+		updateChart(bars, csvData.length, colorScale);
 	};
+
+	//function to highlight enumeration units and bars
+	function highlight(props){
+		//change stroke
+		var selected = d3.selectAll("." + props.name)
+			.style("stroke", "blue")
+			.style("stroke-width", "2");
+	};
+
+	function dehighlight(props) {
+		var selected = d3.selectAll("." + props.name)
+			.style("stroke", function () {
+				return getStyle(this, "stroke")
+			})
+			.style("stroke-width", function () {
+				return getStyle(this, "stroke-width")
+			});
+
+		function getStyle(element, styleName) {
+			var styleText = d3.select(element)
+				.select("desc")
+				.text();
+
+			var styleObject = JSON.parse(styleText);
+
+			return styleObject[styleName];
+		};
+	};
+
+
 })();
