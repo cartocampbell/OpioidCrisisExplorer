@@ -202,7 +202,8 @@
 			})
 			.on("mouseout", function (d) {
 				dehighlight(d.properties);
-		});
+		})
+			.on("mousemove", moveLabel);
 
 		var desc = states.append("desc")
 			.text('{"stroke": "#000", "stroke-width": "0.5px"}');
@@ -290,6 +291,7 @@
 		})
 		//resize bars
 		.attr("height", function(d, i){
+			console.log(d[expressed]);
 			return 463 - yScale(parseFloat(d[expressed]));
 		})
 		.attr("y", function(d, i){
@@ -335,7 +337,8 @@
 			})
 			.attr("width", chartInnerWidth / csvData.length - 1)
 			.on("mouseover", highlight)
-			.on("mouseout", dehighlight);
+			.on("mouseout", dehighlight)
+			.on("mousemove", moveLabel);
 
 
 		//create a text element for the chart title
@@ -374,6 +377,8 @@
 		var selected = d3.selectAll("." + props.name)
 			.style("stroke", "blue")
 			.style("stroke-width", "2");
+
+		setLabel(props);
 	};
 
 	function dehighlight(props) {
@@ -394,6 +399,51 @@
 
 			return styleObject[styleName];
 		};
+
+		d3.select(".infolabel")
+			.remove();
+	};
+
+	//function to create dynamic label
+	function setLabel(props){
+		//label content
+		var labelAttribute = "<h2>" + props[expressed] +
+			"</h2><b>" + expressed + "</b>";
+
+		//create info label div
+		var infolabel = d3.select("body")
+			.append("div")
+			.attr("class", "infolabel")
+			.attr("id", props.adm1_code + "_label")
+			.html(labelAttribute);
+
+		var stateName = infolabel.append("div")
+			.attr("class", "labelname")
+			.html(props.name);
+	};
+
+	//function to move label with mouse
+	function moveLabel(){
+		//get width of label
+		var labelWidth = d3.select(".infolabel")
+			.node()
+			.getBoundingClientRect()
+			.width;
+
+		//use coordinates of mousemove event to set label coordinates
+		var x1 = d3.event.clientX + 10,
+			y1 = d3.event.clientY - 75,
+			x2 = d3.event.clientX - labelWidth - 10,
+			y2 = d3.event.clientY + 25;
+
+		//horizontal label coordinate, testing for overflow
+		var x = d3.event.clientX > window.innerWidth - labelWidth - 20 ? x2 : x1;
+		//vertical label coordinate, testing for overflow
+		var y = d3.event.clientY < 75 ? y2 : y1;
+
+		d3.select(".infolabel")
+			.style("left", x + "px")
+			.style("top", y + "px");
 	};
 
 
