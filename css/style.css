@@ -26,13 +26,16 @@
 }
 
 .chart {
+    position: absolute;
+    top: 80px;
+    right: 20px;
     float: right;
     margin: 7px 20px 0 0;
 }
 
 .chartTitle {
     font-family: sans-serif;
-    font-size: 1.5em;
+    font-size: 20px;
     font-weight: bold;
 }
 
@@ -63,7 +66,7 @@
 
 .dropdown {
     position: absolute;
-    top: 30px;
+    top: 100px;
     left: 40px;
     z-index: 10;
     font-family: sans-serif;
@@ -84,7 +87,7 @@ option {
     min-width: 100px;
     color: #5d5d89;
     background-color: #d1d1e0;
-    border: solid medium #5d5d89;
+    border: solid medium #48486a;
     border-radius: 10px;
     padding: 5px 10px;
     top: -75px;
@@ -95,4 +98,22 @@ option {
     padding: 0;
     display: inline-block;
     line-height: 1em;
+}
+
+.metadata {
+    float: bottom;
+    margin: 10px 0 0 20px;
+    line-height: 1px;
+}
+
+.metadata h3 {
+    display: inline-block;
+}
+
+.metadata p {
+    display: inline-block;
+}
+
+.vizTitle {
+    text-align: center;
 }
