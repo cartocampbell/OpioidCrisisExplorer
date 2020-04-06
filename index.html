@@ -1,6 +1,7 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+	<meta charset="utf-8"/>
 	<title>d3 Coordinated Viz</title>
 
 	<link rel="stylesheet" type="text/css" href="css/style.css">
@@ -8,6 +9,10 @@
 
 </head>
 <body>
+	<div class="vizTitle">
+		<h1><b><i>Visualizing America's Opioid Overdose Crisis</i></b></h1>
+	</div>
+
 
 	<script src='https://unpkg.com/simple-statistics@7.0.7/dist/simple-statistics.min.js'></script>
 	<script src="https://d3js.org/d3-queue.v3.min.js"></script>
@@ -15,5 +20,10 @@
 	<script type="text/javascript" src="lib/d3-v4.js"></script>
 	<script type="text/javascript" src="js/main.js"></script>
 
+	<div class="metadata">
+		<h3><u><i>About the data:</i></u></h3>
+		<p><i>All data presented in this map and chart were obtained from <a href="https://www.kff.org/other/state-indicator/opioid-overdose-death-rates/?currentTimeframe=0&sortModel=%7B%22colId%22:%22Location%22,%22sort%22:%22asc%22%7D" target="_blank">the Kaiser Family Foundation.</a></i></p>
+		<p><i>All overdose rates are per 100,000 population and are age normalized.</i></p>
+	</div>
 </body>
 </html>
