@@ -8,6 +8,9 @@
 
 	var expressed = attrArray[11]; //initial attribute
 
+	var statesArray = ["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","District of Columbia","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi",
+	"Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming"];
+
 	//chart frame dimensions
 	var chartWidth = window.innerWidth * 0.425,
 		chartHeight = 473,
@@ -22,6 +25,13 @@
 	var yScale = d3.scaleLinear()
 		.range([463, 0])
 		.domain([0, 100]);
+
+	//initialize variable for zooming
+	var zoomSettings = {
+		duration: 1000,
+		ease: d3.easeCubicOut,
+		zoomLevel: 5
+	};
 
 //begin script when window loads
 	window.onload = setMap();
@@ -39,6 +49,21 @@
 			.attr("class", "map")
 			.attr("width", width)
 			.attr("height", height);
+
+		var g = map.append("g");
+
+		map.call(d3.zoom().on("zoom", () => {
+			g.attr("transform", d3.event.transform);
+		}));
+
+		// map.append("rect")
+		// 	.attr("width", width)
+		// 	.attr("height", height)
+		// 	.style("fill", "none")
+		// 	.style("pointer-events", "all")
+		// 	.call(d3.zoom()
+		// 		.scaleExtent([1 / 2, 4])
+		// 		.on("zoom", zoomed));
 
 		//create geoconicconformal conic projection centered on US
 		var projection = d3.geoConicConformal()
@@ -62,14 +87,14 @@
 		function callback(error, csvData, countryData, statesData) {
 
 			//place graticule on the map
-			setGraticule(map, path);
+			setGraticule(g, path);
 
 			//translate usStates topojson
 			var naCountries = topojson.feature(countryData, countryData.objects.ne_50m_admin_0_countries), //load background spatial data
 				unitedStates = topojson.feature(statesData, statesData.objects.states).features;//load choropleth data
 
 			//add NA countries to map
-			var northAmerica = map.append("path")
+			var northAmerica = g.append("path")
 				.datum(naCountries)
 				.attr("class", "countries")
 				.attr("d", path);
@@ -81,7 +106,7 @@
 			var colorScale = makeColorScale(csvData);
 
 			//add enumeration units to the map
-			setEnumerationUnits(unitedStates, map, path, colorScale);
+			setEnumerationUnits(unitedStates, g, path, colorScale);
 
 			//add coordinated viz to map
 			setChart(csvData, colorScale);
@@ -194,6 +219,7 @@
 				return "unitedStates " + d.properties.name;
 			})
 			.attr("d", path)
+			.attr('cursor', 'pointer')
 			.style("fill", function (d) {
 				return choropleth(d.properties, colorScale);
 		})
@@ -228,7 +254,7 @@
 			.append("select")
 			.attr("class", "dropdown")
 			.on("change", function(){
-				changeAttribute(this.value, csvData)
+				changeAttribute(this.value.replace(" ", "_"), csvData)
 			});
 
 		//add initial option
@@ -243,7 +269,7 @@
 			.enter()
 			.append("option")
 			.attr("value", function(d) {return d})
-			.text(function (d) {return d});
+			.text(function (d) {return d.replace(/_/g, " ")});
 
 	};
 
@@ -343,20 +369,23 @@
 
 		//create a text element for the chart title
 		var chartTitle = chart.append("text")
-			.attr("x", 35)
+			.attr("x", 150)
 			.attr("y", 30)
 			.attr("class", "chartTitle");
+
 
 
 		//create vertical axis generator
 		var yAxis = d3.axisLeft()
 			.scale(yScale);
 
+
 		//place axis
 		var axis = chart.append("g")
 			.attr("class", "axis")
 			.attr("transform", translate)
 			.call(yAxis);
+
 
 		//create frame for chart border
 		var chartFrame = chart.append("rect")
